@@ -941,15 +941,31 @@ public class Core {
     public boolean checkMagiskNotification(){
         reCreateProcess();
         if (!getBoolean("offed")){
-        String cmd = "/data/data/com.zalexdev.stryker/files/sqlite3 /data/adb/magisk.db \"SELECT notification FROM policies WHERE package_name='com.zalexdev.stryker';\"";
-        boolean b = Core.contains(customCommand(cmd),"1");
+        boolean b = Core.contains(magiskSql("SELECT notification FROM policies WHERE package_name='com.zalexdev.stryker';"),"1");
         if (!b) {
-            cmd = "/data/data/com.zalexdev.stryker/files/sqlite3 /data/adb/magisk.db \"SELECT notification FROM policies WHERE uid='"+android.os.Process.myUid()+"';\"";
-            b = Core.contains(customCommand(cmd),"1");
+            b = Core.contains(magiskSql("SELECT notification FROM policies WHERE uid='"+android.os.Process.myUid()+"';"),"1");
         }
         return b;}else{
             return false;
         }
+    }
+
+    // SQL against Magisk's su-policy database. Magisk 20.3+ ships its own sqlite frontend
+    // (`magisk --sqlite`), which works on every arch; the binary bundled with the app is
+    // 32-bit ARM and fails with "not executable" on 64-bit-only devices, so /system/bin/sqlite3
+    // is preferred over it. KernelSU and other managers have no magisk.db at all — return
+    // nothing instead of shelling out.
+    private ArrayList<String> magiskSql(String sql){
+        if (contains(customCommand("[ -x /data/adb/magisk ] && echo true || echo false"),"true")){
+            return customCommand("/data/adb/magisk --sqlite \"" + sql + "\"");
+        }
+        if (!contains(customCommand("[ -f /data/adb/magisk.db ] && echo true || echo false"),"true")){
+            return new ArrayList<>();
+        }
+        if (contains(customCommand("[ -x /system/bin/sqlite3 ] && echo true || echo false"),"true")){
+            return customCommand("/system/bin/sqlite3 /data/adb/magisk.db \"" + sql + "\"");
+        }
+        return customCommand("/data/data/com.zalexdev.stryker/files/sqlite3 /data/adb/magisk.db \"" + sql + "\"");
     }
 
     public boolean checkRoot(){
@@ -1506,16 +1522,12 @@ public class Core {
 
     public void disableMagiskNotification() {
 
-                if (contains(customCommand("/data/data/com.zalexdev.stryker/files/sqlite3 "
-                        + "/data/adb/magisk.db"
-                        + " \"UPDATE policies SET logging='0',notification='0' WHERE package_name='"
+                if (contains(magiskSql("UPDATE policies SET logging='0',notification='0' WHERE package_name='"
                         + "com.zalexdev.stryker"
-                        + "';\""), "no such"))
-                {customCommand("/data/data/com.zalexdev.stryker/files/sqlite3 "
-                                        + "/data/adb/magisk.db"
-                                        + " \"UPDATE policies SET logging='0',notification='0' WHERE uid='"
-                                        + android.os.Process.myUid()
-                                        + "';\"");}
+                        + "';"), "no such"))
+                {magiskSql("UPDATE policies SET logging='0',notification='0' WHERE uid='"
+                        + android.os.Process.myUid()
+                        + "';");}
     }
 
 

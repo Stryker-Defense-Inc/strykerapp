@@ -61,6 +61,9 @@ public class SettingsHomeFragment extends Fragment {
         SwitchMaterial autoBanner = view.findViewById(R.id.banner_detect);
         SwitchMaterial pixieIfaceDown = view.findViewById(R.id.pixie_iface_down_switch);
         LinearLayout pixieIfaceDownRow = view.findViewById(R.id.pixie_iface_down_row);
+        LinearLayout internalDeauthRow = view.findViewById(R.id.internal_deauth_row);
+        View internalDeauthDivider = view.findViewById(R.id.internal_deauth_divider);
+        SwitchMaterial internalDeauth = view.findViewById(R.id.internal_deauth_switch);
         LinearLayout autoWifiRow = view.findViewById(R.id.autowifi_row);
         LinearLayout saveApsRow = view.findViewById(R.id.save_aps_row);
         LinearLayout autoScanRow = view.findViewById(R.id.autoscan_row);
@@ -81,6 +84,7 @@ public class SettingsHomeFragment extends Fragment {
         saveAps.setChecked(core.isStoreEnabled());
         autoBanner.setChecked(core.isBannerScanEnabled());
         pixieIfaceDown.setChecked(core.isPixieIfaceDown());
+        internalDeauth.setChecked(core.isInternalDeauthEnabled());
         hide.setChecked(core.getBoolean("hide"));
         autoWifi.setChecked(core.getBoolean("wifi"));
         autoScan.setChecked(core.getBoolean("autoScan"));
@@ -89,6 +93,7 @@ public class SettingsHomeFragment extends Fragment {
         saveAps.setOnCheckedChangeListener((btn, b) -> core.putBoolean("save_aps", b));
         autoBanner.setOnCheckedChangeListener((btn, b) -> core.putBoolean("autoBanner", b));
         pixieIfaceDown.setOnCheckedChangeListener((btn, b) -> core.putBoolean("pixie_iface_down", b));
+        internalDeauth.setOnCheckedChangeListener((btn, b) -> core.putBoolean("internal_deauth", b));
         hide.setOnCheckedChangeListener((btn, b) -> core.putBoolean("hide", b));
         autoWifi.setOnCheckedChangeListener((btn, b) -> core.putBoolean("wifi", b));
         autoScan.setOnCheckedChangeListener((btn, b) -> core.putBoolean("autoScan", b));
@@ -96,6 +101,12 @@ public class SettingsHomeFragment extends Fragment {
         bindRowToSwitch(autoWifiRow, autoWifi);
         bindRowToSwitch(saveApsRow, saveAps);
         bindRowToSwitch(pixieIfaceDownRow, pixieIfaceDown);
+        bindRowToSwitch(internalDeauthRow, internalDeauth);
+        if (core.isRootless()) {
+            // The internal radio doesn't exist in the rootless VM — the toggle has no effect there
+            internalDeauthRow.setVisibility(View.GONE);
+            internalDeauthDivider.setVisibility(View.GONE);
+        }
         bindRowToSwitch(autoScanRow, autoScan);
         bindRowToSwitch(bannerRow, autoBanner);
         bindRowToSwitch(hideRow, hide);

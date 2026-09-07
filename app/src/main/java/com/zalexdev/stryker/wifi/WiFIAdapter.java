@@ -678,10 +678,11 @@ public class WiFIAdapter extends RecyclerView.Adapter<WiFIAdapter.ViewHolder> {
                     String wlanscan = core.getHSInterface();
                     String deauthPref = core.getDeauthInterface();
                     ArrayList<String> clients = new ArrayList<>();
-                    if (!core.isRootless() && MonitorManager.isInternalRadio(deauthPref)){
+                    if (!core.isRootless() && !core.isInternalDeauthEnabled()
+                            && MonitorManager.isInternalRadio(deauthPref)){
                         if (!MonitorManager.isInternalRadio(wlanscan)) {
                             deauthPref = wlanscan;
-                            sendEvent("Deauth interface is the internal radio — using " + wlanscan + " instead");
+                            sendEvent("Deauth interface is the internal radio — using " + wlanscan + " instead (enable 'Deauth with internal adapter' in Settings to use it)");
                         } else {
                             deauth = false;
                         }
@@ -787,6 +788,7 @@ public class WiFIAdapter extends RecyclerView.Adapter<WiFIAdapter.ViewHolder> {
                                     ? wlandeauth + "mon" : wlandeauth;
                             final String hsIface = capIface;
                             final boolean internalDeauth = !core.isRootless()
+                                    && !core.isInternalDeauthEnabled()
                                     && MonitorManager.isInternalRadio(deauthIface);
                             final String[] lastRelock = {""};
                             if (deauth) {
@@ -1295,10 +1297,11 @@ public class WiFIAdapter extends RecyclerView.Adapter<WiFIAdapter.ViewHolder> {
             if (dialogCanceled.get()) return;
             String deauthIface = core.getDeauthInterface();
             boolean ok = false;
-            if (core.isRootless() || !MonitorManager.isInternalRadio(deauthIface)){
+            if (core.isRootless() || !MonitorManager.isInternalRadio(deauthIface)
+                    || core.isInternalDeauthEnabled()){
                 ok = core.enableMonitorMode(deauthIface, String.valueOf(network.getChannel()));
             }else{
-                activity.runOnUiThread(() -> outputtext.append("Internal wifi adapter (wlan0) does not support packet injection! Please use external wifi adapter!\n"));
+                activity.runOnUiThread(() -> outputtext.append("Internal wifi adapter (wlan0) deauth is disabled! Enable 'Deauth with internal adapter' in Settings, or use an external wifi adapter!\n"));
             }
             if (dialogCanceled.get()) return;
             final String monIface = core.getDeauthInterface();

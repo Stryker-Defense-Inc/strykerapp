@@ -1387,6 +1387,10 @@ public class Core {
         return preferences.getBoolean("pixie_iface_down", true);
     }
 
+    public boolean isInternalDeauthEnabled(){
+        return preferences.getBoolean("internal_deauth", false);
+    }
+
     public String wpsIfaceDownFlag(){
         return isPixieIfaceDown() ? " --iface-down" : "";
     }

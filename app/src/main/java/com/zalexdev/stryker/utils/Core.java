@@ -337,10 +337,14 @@ public class Core {
         if (host != null) {
             ArrayList<String> names = new ArrayList<>();
             File[] fs = new File(host).listFiles();
-            if (fs != null) for (File f : fs) names.add(f.getName());
-            return names;
+            if (fs != null) {
+                for (File f : fs) names.add(f.getName());
+                return names;
+            }
+            // Unreadable through the app process (e.g. all-files-access denied) —
+            // fall through to the root shell, which still sees the share.
         }
-        return customCommand("ls "+parentDir);
+        return customCommand("ls " + (host != null ? host : parentDir));
     }
 
 

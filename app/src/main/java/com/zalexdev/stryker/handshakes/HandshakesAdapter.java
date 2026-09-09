@@ -281,6 +281,25 @@ public class HandshakesAdapter extends RecyclerView.Adapter<HandshakesAdapter.Vi
                     boolean already = message.toLowerCase(java.util.Locale.ROOT).contains("already");
                     return new UploadResult(already ? UploadOutcome.ALREADY : UploadOutcome.SUCCESS, message);
                 }
+                // Current OnlineHashCrack API responds with accepted/skipped/rejected counts
+                // instead of a success flag: {"accepted":{"count":1,...},"skipped":{...},"rejected":{...}}
+                org.json.JSONObject accepted = json.optJSONObject("accepted");
+                org.json.JSONObject skipped = json.optJSONObject("skipped");
+                org.json.JSONObject rejected = json.optJSONObject("rejected");
+                if (accepted != null || skipped != null || rejected != null) {
+                    int acc = accepted != null ? accepted.optInt("count", 0) : 0;
+                    int skp = skipped != null ? skipped.optInt("count", 0) : 0;
+                    int rej = rejected != null ? rejected.optInt("count", 0) : 0;
+                    if (acc > 0) {
+                        return new UploadResult(UploadOutcome.SUCCESS, message);
+                    }
+                    if (skp > 0) {
+                        String reason = skipped != null ? skipped.optString("reason", "") : "";
+                        return new UploadResult(UploadOutcome.ALREADY, reason);
+                    }
+                    String reason = rejected != null ? rejected.optString("reason", "") : "";
+                    return new UploadResult(UploadOutcome.FAILED, reason);
+                }
                 return new UploadResult(UploadOutcome.FAILED, message);
             } catch (org.json.JSONException ignored) {
             }
